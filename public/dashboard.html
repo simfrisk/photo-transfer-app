@@ -95,10 +95,29 @@
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
+      position: relative;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     .gallery-card:hover { border-color: #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-    .gallery-header { margin-bottom: 0.75rem; }
+    .btn-delete {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: none;
+      color: #ccc;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-delete:hover { background: #fef2f2; color: #e53935; }
+    .gallery-header { margin-bottom: 0.75rem; padding-right: 1.5rem; }
     .gallery-title { font-size: 1.05rem; font-weight: 600; color: #111; }
     .gallery-meta { color: #999; font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; }
     .gallery-actions {
@@ -126,13 +145,6 @@
       white-space: nowrap;
     }
     .btn-action:hover { border-color: #bbb; color: #111; background: #f7f6f4; }
-    .btn-action.danger {
-      margin-left: auto;
-      border-color: transparent;
-      color: #bbb;
-      background: none;
-    }
-    .btn-action.danger:hover { color: #e53935; background: #fef2f2; border-color: #fecaca; }
     .btn-action.copy-btn {
       background: #1a1a1a;
       border-color: #1a1a1a;
@@ -264,22 +276,20 @@
         const card = document.createElement('div');
         card.className = 'gallery-card';
         card.innerHTML = `
+          <button class="btn-delete" onclick="deleteGallery(${g.id}, this)" title="Delete gallery">&times;</button>
           <div class="gallery-header">
-            <div>
-              <div class="gallery-title">${escHtml(g.title)}</div>
-              <div class="gallery-meta">
-                <span>${g.image_count} image${g.image_count !== 1 ? 's' : ''}</span>
-                <span>&middot;</span>
-                <span>${formatDate(g.created_at)}</span>
-                ${g.expires_at ? `<span>&middot; Expires ${formatDate(g.expires_at)}</span>` : ''}
-              </div>
+            <div class="gallery-title">${escHtml(g.title)}</div>
+            <div class="gallery-meta">
+              <span>${g.image_count} image${g.image_count !== 1 ? 's' : ''}</span>
+              <span>&middot;</span>
+              <span>${formatDate(g.created_at)}</span>
+              ${g.expires_at ? `<span>&middot; Expires ${formatDate(g.expires_at)}</span>` : ''}
             </div>
           </div>
           <div class="gallery-actions">
             <a class="btn-action" href="/upload/${g.id}">Upload</a>
             <button class="btn-action copy-btn" id="copybtn-${g.id}" onclick="copyLink('${escAttr(shareUrl)}', ${g.id})">Copy link</button>
             <a class="btn-action" href="/gallery/${escAttr(g.share_token)}" target="_blank">Preview</a>
-            <button class="btn-action danger" onclick="deleteGallery(${g.id}, this)">Delete</button>
           </div>
         `;
         grid.appendChild(card);

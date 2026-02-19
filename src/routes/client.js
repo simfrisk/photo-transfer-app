@@ -1,9 +1,102 @@
 const express = require('express');
-const archiver = require('archiver');
 const { query } = require('../config/db');
 const { getSignedDownloadUrl, downloadFileStream } = require('../services/storage');
 
 const router = express.Router();
+
+// ── Minimal ZIP writer (no external dependencies) ──────────────────────
+// Builds a valid ZIP file (store/no-compression) by writing local file
+// headers, data, and then the central directory + end record.
+function crc32(buf) {
+  let table = crc32.table;
+  if (!table) {
+    table = crc32.table = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let j = 0; j < 8; j++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      table[i] = c;
+    }
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) crc = table[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function buildZipBuffer(files) {
+  // files: [{ name: string, data: Buffer }]
+  const localHeaders = [];
+  const centralHeaders = [];
+  let offset = 0;
+  const parts = [];
+
+  for (const file of files) {
+    const nameBytes = Buffer.from(file.name, 'utf8');
+    const crc = crc32(file.data);
+    const size = file.data.length;
+
+    // Local file header (30 + nameLen)
+    const local = Buffer.alloc(30 + nameBytes.length);
+    local.writeUInt32LE(0x04034b50, 0);  // signature
+    local.writeUInt16LE(20, 4);           // version needed
+    local.writeUInt16LE(0, 6);            // flags
+    local.writeUInt16LE(0, 8);            // compression: store
+    local.writeUInt16LE(0, 10);           // mod time
+    local.writeUInt16LE(0, 12);           // mod date
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(size, 18);        // compressed
+    local.writeUInt32LE(size, 22);        // uncompressed
+    local.writeUInt16LE(nameBytes.length, 26);
+    local.writeUInt16LE(0, 28);           // extra field length
+    nameBytes.copy(local, 30);
+
+    // Central directory header (46 + nameLen)
+    const central = Buffer.alloc(46 + nameBytes.length);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);         // version made by
+    central.writeUInt16LE(20, 6);         // version needed
+    central.writeUInt16LE(0, 8);          // flags
+    central.writeUInt16LE(0, 10);         // compression
+    central.writeUInt16LE(0, 12);         // mod time
+    central.writeUInt16LE(0, 14);         // mod date
+    central.writeUInt32LE(crc, 16);
+    central.writeUInt32LE(size, 20);
+    central.writeUInt32LE(size, 24);
+    central.writeUInt16LE(nameBytes.length, 28);
+    central.writeUInt16LE(0, 30);         // extra field length
+    central.writeUInt16LE(0, 32);         // comment length
+    central.writeUInt16LE(0, 34);         // disk number start
+    central.writeUInt16LE(0, 36);         // internal attrs
+    central.writeUInt32LE(0, 38);         // external attrs
+    central.writeUInt32LE(offset, 42);    // relative offset
+    nameBytes.copy(central, 46);
+
+    parts.push(local, file.data);
+    centralHeaders.push(central);
+    offset += local.length + file.data.length;
+  }
+
+  const centralStart = offset;
+  let centralSize = 0;
+  for (const ch of centralHeaders) {
+    parts.push(ch);
+    centralSize += ch.length;
+  }
+
+  // End of central directory
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(0, 4);               // disk number
+  end.writeUInt16LE(0, 6);               // disk with central dir
+  end.writeUInt16LE(files.length, 8);
+  end.writeUInt16LE(files.length, 10);
+  end.writeUInt32LE(centralSize, 12);
+  end.writeUInt32LE(centralStart, 16);
+  end.writeUInt16LE(0, 20);              // comment length
+  parts.push(end);
+
+  return Buffer.concat(parts);
+}
+// ────────────────────────────────────────────────────────────────────────
 
 // GET /api/client/gallery/:shareToken - public gallery view
 router.get('/gallery/:shareToken', async (req, res) => {
@@ -133,17 +226,9 @@ router.get('/download-all/:shareToken', async (req, res) => {
       return res.status(404).json({ error: 'No images in this gallery' });
     }
 
-    const safeName = gallery.title.replace(/[^a-zA-Z0-9_\- ]/g, '').trim() || 'gallery';
-    res.set({
-      'Content-Type': 'application/zip',
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(safeName)}.zip"`,
-    });
-
-    const archive = archiver('zip', { store: true }); // store = no compression (images are already compressed)
-    archive.pipe(res);
-
-    // Track filenames to avoid duplicates
+    // Download all files into memory and build zip
     const usedNames = {};
+    const files = [];
     for (const img of iResult.rows) {
       let name = img.filename || 'image.jpg';
       if (usedNames[name]) {
@@ -156,10 +241,21 @@ router.get('/download-all/:shareToken', async (req, res) => {
       }
 
       const stream = await downloadFileStream(img.original_key);
-      archive.append(stream, { name });
+      const chunks = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      files.push({ name, data: Buffer.concat(chunks) });
     }
 
-    await archive.finalize();
+    const zipBuffer = buildZipBuffer(files);
+    const safeName = gallery.title.replace(/[^a-zA-Z0-9_\- ]/g, '').trim() || 'gallery';
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(safeName)}.zip"`,
+      'Content-Length': String(zipBuffer.length),
+    });
+    res.send(zipBuffer);
   } catch (err) {
     console.error('Download all error:', err);
     if (!res.headersSent) {

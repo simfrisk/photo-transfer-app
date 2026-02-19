@@ -62,43 +62,30 @@
     }
     .btn-download-all:hover { border-color: #aaa; color: #222; }
 
-    /* Grid */
+    /* Masonry */
     main { padding: 0 2.5rem 3rem; }
 
     .photo-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-auto-rows: 260px;
-      grid-auto-flow: dense;
-      gap: 0.4rem;
+      columns: 3;
+      column-gap: 0.4rem;
     }
-    @media (max-width: 900px) { .photo-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 220px; } }
-    @media (max-width: 500px)  { .photo-grid { grid-template-columns: 1fr; gap: 0.3rem; grid-auto-rows: 200px; } }
+    @media (max-width: 900px) { .photo-grid { columns: 2; } }
+    @media (max-width: 500px)  { .photo-grid { columns: 1; column-gap: 0.3rem; } }
 
     .photo-item {
       position: relative;
       overflow: hidden;
       background: #e2e0db;
       cursor: pointer;
+      break-inside: avoid;
+      margin-bottom: 0.4rem;
+      display: block;
     }
-    /* Wide feature items span 2 columns + 2 rows */
-    .photo-item.wide {
-      grid-column: span 2;
-      grid-row: span 2;
-    }
-    /* Portrait/tall images span 2 rows */
-    .photo-item.tall {
-      grid-row: span 2;
-    }
-    @media (max-width: 900px) {
-      .photo-item.wide { grid-column: span 1; grid-row: span 1; }
-      .photo-item.tall { grid-row: span 2; }
-    }
+    @media (max-width: 500px) { .photo-item { margin-bottom: 0.3rem; } }
 
     .photo-item img {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      height: auto;
       display: block;
       transition: transform 0.5s ease;
     }
@@ -308,14 +295,6 @@
         imgEl.alt = img.filename;
         imgEl.loading = 'lazy';
         imgEl.src = img.thumbUrl;
-        // Detect orientation once loaded and assign grid span class
-        imgEl.addEventListener('load', () => {
-          if (imgEl.naturalHeight > imgEl.naturalWidth) {
-            item.classList.add('tall');
-          } else if (idx % 7 === 0) {
-            item.classList.add('wide');
-          }
-        });
         const labelEl = document.createElement('div');
         labelEl.className = 'photo-label';
         labelEl.innerHTML = `<span>${escHtml(label)}</span>`;

@@ -81,13 +81,18 @@
       background: #e2e0db;
       cursor: pointer;
     }
-    /* Every 7th item spans 2 columns and 2 rows for variety — dense fill prevents gaps */
-    .photo-item:nth-child(7n+1) {
+    /* Wide feature items span 2 columns + 2 rows */
+    .photo-item.wide {
       grid-column: span 2;
       grid-row: span 2;
     }
+    /* Portrait/tall images span 2 rows */
+    .photo-item.tall {
+      grid-row: span 2;
+    }
     @media (max-width: 900px) {
-      .photo-item:nth-child(7n+1) { grid-column: span 1; grid-row: span 1; }
+      .photo-item.wide { grid-column: span 1; grid-row: span 1; }
+      .photo-item.tall { grid-row: span 2; }
     }
 
     .photo-item img {
@@ -299,10 +304,23 @@
         item.setAttribute('aria-label', 'View ' + img.filename);
         // Strip extension for cleaner label
         const label = img.filename.replace(/\.[^.]+$/, '');
-        item.innerHTML = `
-          <img src="${escHtml(img.thumbUrl)}" alt="${escHtml(img.filename)}" loading="lazy">
-          <div class="photo-label"><span>${escHtml(label)}</span></div>
-        `;
+        const imgEl = document.createElement('img');
+        imgEl.alt = img.filename;
+        imgEl.loading = 'lazy';
+        imgEl.src = img.thumbUrl;
+        // Detect orientation once loaded and assign grid span class
+        imgEl.addEventListener('load', () => {
+          if (imgEl.naturalHeight > imgEl.naturalWidth) {
+            item.classList.add('tall');
+          } else if (idx % 7 === 0) {
+            item.classList.add('wide');
+          }
+        });
+        const labelEl = document.createElement('div');
+        labelEl.className = 'photo-label';
+        labelEl.innerHTML = `<span>${escHtml(label)}</span>`;
+        item.appendChild(imgEl);
+        item.appendChild(labelEl);
         item.addEventListener('click', () => openLightbox(idx));
         item.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') openLightbox(idx); });
         grid.appendChild(item);

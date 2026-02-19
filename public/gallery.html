@@ -89,14 +89,6 @@
       display: block;
       transition: transform 0.5s ease;
     }
-    /* Crop last items in each column to align the bottom edge */
-    .photo-item.last-in-column {
-      overflow: hidden;
-    }
-    .photo-item.last-in-column img {
-      height: 260px;
-      object-fit: cover;
-    }
     .photo-item:hover img { transform: scale(1.04); }
 
     /* Gradient + label on hover — like reference image */
@@ -314,25 +306,6 @@
       });
 
       document.getElementById('loadingMsg').style.display = 'none';
-      // After images load, crop the last item in each column to align bottoms
-      requestAnimationFrame(alignColumnBottoms);
-    }
-
-    function alignColumnBottoms() {
-      const items = Array.from(document.querySelectorAll('.photo-item'));
-      items.forEach(el => el.classList.remove('last-in-column'));
-      if (items.length === 0) return;
-      // Find the bottom-most item(s) — those whose bottom edge is furthest down
-      // Group by approximate left position (column) and find the last in each
-      const cols = {};
-      items.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        const col = Math.round(rect.left);
-        if (!cols[col] || rect.bottom > cols[col].rect.bottom) {
-          cols[col] = { el, rect };
-        }
-      });
-      Object.values(cols).forEach(({ el }) => el.classList.add('last-in-column'));
     }
 
     function downloadAll() {

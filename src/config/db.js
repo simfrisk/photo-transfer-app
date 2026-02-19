@@ -67,6 +67,11 @@ async function initSchema() {
   await query(`
     CREATE INDEX IF NOT EXISTS idx_images_gallery ON images(gallery_id)
   `);
+
+  // Add sort_order column if missing (for drag-reorder support)
+  await query(`
+    ALTER TABLE images ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0
+  `);
 }
 
 module.exports = { query, initSchema };

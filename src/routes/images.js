@@ -100,8 +100,40 @@ router.post('/upload/:galleryId', async (req, res) => {
   }
 });
 
+// PUT /api/images/reorder - update sort order for images in a gallery
+router.put('/reorder', express.json(), async (req, res) => {
+  const { galleryId, imageIds } = req.body;
+  if (!galleryId || !Array.isArray(imageIds)) {
+    return res.status(400).json({ error: 'galleryId and imageIds array required' });
+  }
+
+  try {
+    // Verify gallery ownership
+    const gResult = await query(
+      'SELECT id FROM galleries WHERE id = $1 AND photographer_id = $2',
+      [galleryId, req.photographer.id]
+    );
+    if (!gResult.rows[0]) {
+      return res.status(404).json({ error: 'Gallery not found' });
+    }
+
+    // Update sort_order for each image
+    for (let i = 0; i < imageIds.length; i++) {
+      await query(
+        'UPDATE images SET sort_order = $1 WHERE id = $2 AND gallery_id = $3',
+        [i, imageIds[i], galleryId]
+      );
+    }
+
+    res.json({ message: 'Order updated' });
+  } catch (err) {
+    console.error('Reorder error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // DELETE /api/images/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', express.json(), async (req, res) => {
   try {
     const result = await query(
       `SELECT i.* FROM images i

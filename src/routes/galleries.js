@@ -1,7 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const { query } = require('../config/db');
-const { deleteFile } = require('../services/storage');
+const { deleteFile, getSignedDownloadUrl } = require('../services/storage');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -61,11 +61,21 @@ router.get('/:id', async (req, res) => {
     }
 
     const iResult = await query(
-      'SELECT * FROM images WHERE gallery_id = $1 ORDER BY uploaded_at DESC',
+      'SELECT * FROM images WHERE gallery_id = $1 ORDER BY sort_order ASC, uploaded_at ASC',
       [req.params.id]
     );
 
-    res.json({ ...gResult.rows[0], images: iResult.rows });
+    // Add signed thumbnail URLs for each image
+    const images = await Promise.all(
+      iResult.rows.map(async (img) => {
+        const thumbUrl = img.thumb_key
+          ? await getSignedDownloadUrl(img.thumb_key, 3600)
+          : await getSignedDownloadUrl(img.original_key, 3600);
+        return { ...img, thumbUrl };
+      })
+    );
+
+    res.json({ ...gResult.rows[0], images });
   } catch (err) {
     console.error('Get gallery error:', err);
     res.status(500).json({ error: 'Server error' });

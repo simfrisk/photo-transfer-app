@@ -121,7 +121,7 @@ router.get('/gallery/:shareToken', async (req, res) => {
 
     // Fetch images with signed thumbnail URLs
     const iResult = await query(
-      'SELECT * FROM images WHERE gallery_id = $1 ORDER BY uploaded_at ASC',
+      'SELECT * FROM images WHERE gallery_id = $1 ORDER BY sort_order ASC, uploaded_at ASC',
       [gallery.id]
     );
 
@@ -218,7 +218,7 @@ router.get('/download-all/:shareToken', async (req, res) => {
     }
 
     const iResult = await query(
-      'SELECT * FROM images WHERE gallery_id = $1 ORDER BY uploaded_at ASC',
+      'SELECT * FROM images WHERE gallery_id = $1 ORDER BY sort_order ASC, uploaded_at ASC',
       [gallery.id]
     );
 

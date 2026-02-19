@@ -29,6 +29,7 @@ app.get('/', (req, res) => res.redirect('/login.html'));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 app.get('/upload/:galleryId', (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
+app.get('/edit/:galleryId', (req, res) => res.sendFile(path.join(__dirname, 'public', 'edit.html')));
 app.get('/gallery/:shareToken', (req, res) => res.sendFile(path.join(__dirname, 'public', 'gallery.html')));
 
 // Health check

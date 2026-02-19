@@ -95,42 +95,39 @@
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     .gallery-card:hover { border-color: #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-    .gallery-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
+    .gallery-header { margin-bottom: 0.75rem; }
     .gallery-title { font-size: 1.05rem; font-weight: 600; color: #111; }
     .gallery-meta { color: #999; font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; }
     .gallery-actions {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
       margin-top: auto;
       padding-top: 1rem;
       border-top: 1px solid #f0eeeb;
     }
-    .gallery-actions-left { display: flex; gap: 0.5rem; flex: 1; min-width: 0; }
-    .gallery-actions-right { margin-left: auto; flex-shrink: 0; }
 
     .btn-action {
       background: none;
       border: 1px solid #e0ddd9;
       color: #555;
       border-radius: 7px;
-      padding: 0.4rem 0.85rem;
-      font-size: 0.8rem;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.78rem;
       cursor: pointer;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
       transition: all 0.15s;
       white-space: nowrap;
     }
     .btn-action:hover { border-color: #bbb; color: #111; background: #f7f6f4; }
     .btn-action.danger {
+      margin-left: auto;
       border-color: transparent;
       color: #bbb;
       background: none;
@@ -279,14 +276,10 @@
             </div>
           </div>
           <div class="gallery-actions">
-            <div class="gallery-actions-left">
-              <a class="btn-action" href="/upload/${g.id}">Upload</a>
-              <button class="btn-action copy-btn" id="copybtn-${g.id}" onclick="copyLink('${escAttr(shareUrl)}', ${g.id})">Copy link</button>
-              <a class="btn-action" href="/gallery/${escAttr(g.share_token)}" target="_blank">Preview</a>
-            </div>
-            <div class="gallery-actions-right">
-              <button class="btn-action danger" onclick="deleteGallery(${g.id}, this)">Delete</button>
-            </div>
+            <a class="btn-action" href="/upload/${g.id}">Upload</a>
+            <button class="btn-action copy-btn" id="copybtn-${g.id}" onclick="copyLink('${escAttr(shareUrl)}', ${g.id})">Copy link</button>
+            <a class="btn-action" href="/gallery/${escAttr(g.share_token)}" target="_blank">Preview</a>
+            <button class="btn-action danger" onclick="deleteGallery(${g.id}, this)">Delete</button>
           </div>
         `;
         grid.appendChild(card);

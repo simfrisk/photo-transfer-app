@@ -81,7 +81,7 @@
     .upload-filename { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.3rem; }
     .upload-size { font-size: 0.78rem; color: #666; margin-bottom: 0.5rem; }
     .progress-bar { height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #4ade80; border-radius: 2px; transition: width 0.3s; }
+    .progress-fill { height: 100%; background: #4ade80; border-radius: 2px; transition: width 0.2s; }
     .upload-status { font-size: 0.82rem; margin-top: 0.3rem; }
     .status-pending { color: #888; }
     .status-uploading { color: #60a5fa; }
@@ -154,6 +154,16 @@
       return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
+    function getImageDimensions(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => { URL.revokeObjectURL(url); resolve({ width: img.naturalWidth, height: img.naturalHeight }); };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve({ width: null, height: null }); };
+        img.src = url;
+      });
+    }
+
     function addFiles(files) {
       for (const file of files) {
         if (!file.type.startsWith('image/')) continue;
@@ -170,11 +180,6 @@
       const item = document.createElement('div');
       item.className = 'upload-item';
       item.id = 'item-' + id;
-
-      const img = document.createElement('img');
-      img.className = 'thumb-preview';
-      img.src = URL.createObjectURL(file);
-
       item.innerHTML = `
         <img class="thumb-preview" src="${URL.createObjectURL(file)}" alt="">
         <div class="upload-info">
@@ -205,30 +210,73 @@
       for (const item of uploadQueue) {
         if (item.status === 'done') continue;
         item.status = 'uploading';
-        setStatus(item.id, 'uploading', 'Uploading…');
-        setProgress(item.id, 10);
-
-        const form = new FormData();
-        form.append('image', item.file);
+        setStatus(item.id, 'uploading', 'Getting upload URL…');
+        setProgress(item.id, 5);
 
         try {
-          // Simulate progress
-          let prog = 10;
-          const interval = setInterval(() => {
-            prog = Math.min(prog + 15, 85);
-            setProgress(item.id, prog);
-          }, 300);
-
-          const res = await fetch('/api/images/upload/' + galleryId, {
+          // Step 1: Get presigned URL from our server
+          const presignRes = await fetch('/api/images/presign/' + galleryId, {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token },
-            body: form,
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename: item.file.name, mimeType: item.file.type }),
           });
-          clearInterval(interval);
+          if (!presignRes.ok) {
+            const err = await presignRes.json();
+            throw new Error(err.error || 'Failed to get upload URL');
+          }
+          const { uploadUrl, originalKey, thumbKey } = await presignRes.json();
 
-          if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error || 'Upload failed');
+          setStatus(item.id, 'uploading', 'Uploading…');
+          setProgress(item.id, 15);
+
+          // Step 2: PUT file directly to MinIO using XHR for progress tracking
+          await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadUrl);
+            xhr.setRequestHeader('Content-Type', item.file.type);
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const pct = Math.round((e.loaded / e.total) * 80) + 15;
+                setProgress(item.id, pct);
+              }
+            };
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) resolve();
+              else reject(new Error(`Storage upload failed (${xhr.status})`));
+            };
+            xhr.onerror = () => reject(new Error('Network error during upload'));
+            xhr.send(item.file);
+          });
+
+          setStatus(item.id, 'uploading', 'Saving…');
+          setProgress(item.id, 95);
+
+          // Step 3: Get image dimensions in browser
+          const { width, height } = await getImageDimensions(item.file);
+
+          // Step 4: Confirm with our server to save the DB record
+          const confirmRes = await fetch('/api/images/confirm/' + galleryId, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              originalKey,
+              thumbKey,
+              filename: item.file.name,
+              mimeType: item.file.type,
+              sizeBytes: item.file.size,
+              width,
+              height,
+            }),
+          });
+          if (!confirmRes.ok) {
+            const err = await confirmRes.json();
+            throw new Error(err.error || 'Failed to save image');
           }
 
           item.status = 'done';
@@ -258,7 +306,6 @@
       if (el) el.style.width = pct + '%';
     }
 
-    // Drag and drop
     const dz = document.getElementById('dropZone');
     dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag-over'); });
     dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));

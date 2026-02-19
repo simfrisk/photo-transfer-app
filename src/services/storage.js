@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, CreateBucketCommand, HeadBucketCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, CreateBucketCommand, HeadBucketCommand, PutBucketCorsCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 const s3 = new S3Client({
@@ -24,6 +24,29 @@ async function ensureBucket() {
       throw err;
     }
   }
+  // Set CORS so browsers can upload directly to MinIO
+  await s3.send(new PutBucketCorsCommand({
+    Bucket: BUCKET,
+    CORSConfiguration: {
+      CORSRules: [{
+        AllowedOrigins: ['*'],
+        AllowedMethods: ['GET', 'PUT', 'HEAD'],
+        AllowedHeaders: ['*'],
+        ExposeHeaders: ['ETag'],
+        MaxAgeSeconds: 3000,
+      }],
+    },
+  }));
+  console.log('Bucket CORS configured');
+}
+
+async function getSignedUploadUrl(key, mimeType, expiresIn = 300) {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ContentType: mimeType,
+  });
+  return getSignedUrl(s3, command, { expiresIn });
 }
 
 async function uploadFile(buffer, key, mimeType) {
@@ -45,4 +68,4 @@ async function deleteFile(key) {
   await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
 
-module.exports = { ensureBucket, uploadFile, getSignedDownloadUrl, deleteFile };
+module.exports = { ensureBucket, uploadFile, getSignedUploadUrl, getSignedDownloadUrl, deleteFile };

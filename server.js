@@ -9,6 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+
+// Register image upload route BEFORE body parsers so the raw stream is untouched
+app.use('/api/images', require('./src/routes/images'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -18,12 +22,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API routes
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/galleries', require('./src/routes/galleries'));
-// Images upload route — disable body parser so we can stream the raw body
-app.use('/api/images', (req, res, next) => {
-  if (req.path.startsWith('/upload/')) return next();
-  express.json()(req, res, next);
-});
-app.use('/api/images', require('./src/routes/images'));
 app.use('/api/client', require('./src/routes/client'));
 
 // Frontend page routes

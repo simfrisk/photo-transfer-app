@@ -63,32 +63,71 @@
       display: none;
     }
     .logo { font-size: 2rem; margin-bottom: 1rem; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .tab {
+      flex: 1; background: transparent; color: #888;
+      border: 1px solid #333; border-radius: 8px;
+      padding: 0.5rem; font-size: 0.9rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .tab.active { background: #fff; color: #000; border-color: #fff; }
+    .tab:hover:not(.active) { border-color: #555; color: #ccc; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="logo">📷</div>
     <h1>PhotoTransfer</h1>
-    <p class="subtitle">Sign in to your photographer account</p>
+    <div class="tabs">
+      <button class="tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+      <button class="tab" id="tabRegister" onclick="switchTab('register')">Create Account</button>
+    </div>
     <div class="error" id="error"></div>
+
     <form id="loginForm">
       <label for="email">Email</label>
       <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
       <label for="password">Password</label>
       <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
-      <button type="submit" id="submitBtn">Sign In</button>
+      <button type="submit" id="loginBtn">Sign In</button>
+    </form>
+
+    <form id="registerForm" style="display:none">
+      <label for="regName">Name</label>
+      <input type="text" id="regName" placeholder="Your name" required>
+      <label for="regEmail">Email</label>
+      <input type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email">
+      <label for="regPassword">Password</label>
+      <input type="password" id="regPassword" placeholder="Min. 8 characters" required autocomplete="new-password">
+      <label for="regSecret">Registration Code</label>
+      <input type="password" id="regSecret" placeholder="Enter your registration code" required>
+      <button type="submit" id="registerBtn">Create Account</button>
     </form>
   </div>
 
   <script>
-    // Redirect if already logged in
     if (localStorage.getItem('pt_token')) {
       window.location.href = '/dashboard';
     }
 
+    function switchTab(tab) {
+      document.getElementById('error').style.display = 'none';
+      if (tab === 'login') {
+        document.getElementById('loginForm').style.display = '';
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('tabLogin').classList.add('active');
+        document.getElementById('tabRegister').classList.remove('active');
+      } else {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = '';
+        document.getElementById('tabLogin').classList.remove('active');
+        document.getElementById('tabRegister').classList.add('active');
+      }
+    }
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('submitBtn');
+      const btn = document.getElementById('loginBtn');
       const errorEl = document.getElementById('error');
       errorEl.style.display = 'none';
       btn.disabled = true;
@@ -105,7 +144,6 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
-
         localStorage.setItem('pt_token', data.token);
         localStorage.setItem('pt_user', JSON.stringify(data.photographer));
         window.location.href = '/dashboard';
@@ -114,6 +152,38 @@
         errorEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Sign In';
+      }
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('registerBtn');
+      const errorEl = document.getElementById('error');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Creating account…';
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('regName').value,
+            email: document.getElementById('regEmail').value,
+            password: document.getElementById('regPassword').value,
+            registerSecret: document.getElementById('regSecret').value,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+        localStorage.setItem('pt_token', data.token);
+        localStorage.setItem('pt_user', JSON.stringify(data.photographer));
+        window.location.href = '/dashboard';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
       }
     });
   </script>

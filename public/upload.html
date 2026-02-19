@@ -148,6 +148,7 @@
     }
 
     async function uploadAll() {
+      console.log('[Upload] uploadAll called, queue length:', uploadQueue.length, 'uploading:', uploading);
       if (uploading) return;
       uploading = true;
       const btn = document.getElementById('uploadAllBtn');
@@ -160,10 +161,13 @@
         setStatus(item.id, 'uploading', 'Uploading…');
         setProgress(item.id, 10);
 
+        console.log('[Upload] Starting upload for:', item.file.name, 'size:', item.file.size, 'type:', item.file.type);
+
         try {
           // Simulate progress while uploading (fetch doesn't expose upload progress)
           let progInterval = setInterval(() => setProgress(item.id, Math.min(90, (parseInt(document.getElementById('prog-' + item.id).style.width) || 10) + 5)), 400);
 
+          console.log('[Upload] Sending fetch to /api/images/upload/' + galleryId);
           const res = await fetch('/api/images/upload/' + galleryId, {
             method: 'POST',
             headers: {
@@ -175,16 +179,21 @@
           });
 
           clearInterval(progInterval);
+          console.log('[Upload] Response status:', res.status, res.statusText);
 
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
+            console.error('[Upload] Server error response:', err);
             throw new Error(err.error || `Upload failed (${res.status})`);
           }
 
+          const result = await res.json();
+          console.log('[Upload] Success:', result);
           item.status = 'done';
           setProgress(item.id, 100);
           setStatus(item.id, 'done', '✓ Uploaded');
         } catch (err) {
+          console.error('[Upload] Upload failed for', item.file.name, ':', err);
           item.status = 'error';
           setProgress(item.id, 0);
           setStatus(item.id, 'error', '✕ ' + err.message);

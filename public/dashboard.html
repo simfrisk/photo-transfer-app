@@ -99,31 +99,31 @@
     .gallery-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; color: #111; }
     .gallery-meta { color: #bbb; font-size: 0.8rem; margin-bottom: 1rem; }
     .gallery-meta span { margin-right: 0.6rem; }
-    .gallery-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    .gallery-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f0eeeb; }
 
     .btn-action {
       background: none;
       border: 1px solid #e0ddd9;
-      color: #777;
+      color: #666;
       border-radius: 6px;
-      padding: 0.35rem 0.7rem;
+      padding: 0.35rem 0.75rem;
       font-size: 0.8rem;
       cursor: pointer;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 0.25rem;
       transition: all 0.2s;
     }
-    .btn-action:hover { border-color: #bbb; color: #333; }
-    .btn-action.danger:hover { border-color: #e57373; color: #e57373; }
+    .btn-action:hover { border-color: #bbb; color: #222; background: #f7f6f4; }
+    .btn-action.danger { margin-left: auto; }
+    .btn-action.danger:hover { border-color: #e57373; color: #e57373; background: none; }
     .btn-action.copy-btn {
-      background: #f4f3f1;
-      border-color: #e0ddd9;
-      color: #555;
+      background: #1a1a1a;
+      border-color: #1a1a1a;
+      color: #fff;
       font-weight: 500;
     }
-    .btn-action.copy-btn:hover { background: #ece9e6; border-color: #bbb; color: #222; }
+    .btn-action.copy-btn:hover { background: #333; border-color: #333; color: #fff; }
     .btn-action.copied-state {
       background: #f0faf0;
       border-color: #a5d6a7;
@@ -251,15 +251,15 @@
           <div class="gallery-title">${escHtml(g.title)}</div>
           <div class="gallery-meta">
             <span>${g.image_count} image${g.image_count !== 1 ? 's' : ''}</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>${formatDate(g.created_at)}</span>
-            ${g.expires_at ? `<span>· Expires ${formatDate(g.expires_at)}</span>` : ''}
+            ${g.expires_at ? `<span>&middot; Expires ${formatDate(g.expires_at)}</span>` : ''}
           </div>
           <div class="gallery-actions">
-            <a class="btn-action" href="/upload/${g.id}">↑ Upload</a>
-            <button class="btn-action copy-btn" id="copybtn-${g.id}" onclick="copyLink('${escAttr(shareUrl)}', ${g.id})">⧉ Copy link</button>
-            <a class="btn-action" href="/gallery/${escAttr(g.share_token)}" target="_blank">↗ Preview</a>
-            <button class="btn-action danger" onclick="deleteGallery(${g.id}, this)">✕</button>
+            <a class="btn-action" href="/upload/${g.id}">Upload</a>
+            <button class="btn-action copy-btn" id="copybtn-${g.id}" onclick="copyLink('${escAttr(shareUrl)}', ${g.id})">Copy link</button>
+            <a class="btn-action" href="/gallery/${escAttr(g.share_token)}" target="_blank">Preview</a>
+            <button class="btn-action danger" onclick="deleteGallery(${g.id}, this)">Delete</button>
           </div>
         `;
         grid.appendChild(card);
@@ -335,11 +335,11 @@
       const btn = document.getElementById('copybtn-' + galleryId);
       try {
         await navigator.clipboard.writeText(url);
-        btn.textContent = '✓ Copied';
+        btn.textContent = 'Copied';
         btn.classList.add('copied-state');
         showToast('Link copied');
         setTimeout(() => {
-          btn.textContent = '⧉ Copy link';
+          btn.textContent = 'Copy link';
           btn.classList.remove('copied-state');
         }, 2000);
       } catch {

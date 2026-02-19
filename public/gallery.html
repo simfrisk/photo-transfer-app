@@ -32,6 +32,17 @@
       margin-bottom: 1rem;
     }
     .count { color: #aaa; font-size: 0.85rem; }
+    .btn-download-all {
+      background: none;
+      border: 1px solid #e0ddd9;
+      color: #777;
+      border-radius: 6px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-download-all:hover { border-color: #bbb; color: #333; }
 
     /* Masonry-style puzzle grid */
     .photo-grid {
@@ -139,15 +150,33 @@
     .lb-next { right: 1rem; }
     .lb-counter {
       position: fixed;
-      bottom: 1.25rem;
+      bottom: 3.5rem;
       left: 50%;
       transform: translateX(-50%);
-      color: rgba(255,255,255,0.5);
-      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.78rem;
       letter-spacing: 0.05em;
       z-index: 1001;
       pointer-events: none;
     }
+    .lb-download {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 0.82rem;
+      padding: 0.45rem 1.1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 1001;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .lb-download:hover { background: rgba(255,255,255,0.22); }
 
     .loading { text-align: center; color: #bbb; padding: 5rem; font-size: 1rem; }
     .error-msg { text-align: center; color: #e57373; padding: 5rem; }
@@ -177,6 +206,7 @@
     <div id="contentArea" style="display:none">
       <div class="toolbar">
         <div class="count" id="photoCount"></div>
+        <button class="btn-download-all" onclick="downloadAll()">Download all</button>
       </div>
       <div class="photo-grid" id="photoGrid"></div>
     </div>
@@ -186,11 +216,12 @@
 
   <!-- Lightbox -->
   <div class="lightbox" id="lightbox">
-    <button class="lb-close" onclick="closeLightbox()" aria-label="Close">✕</button>
-    <button class="lb-nav lb-prev" onclick="navLightbox(-1)" aria-label="Previous">‹</button>
+    <button class="lb-close" onclick="closeLightbox()" aria-label="Close">&#x2715;</button>
+    <button class="lb-nav lb-prev" onclick="navLightbox(-1)" aria-label="Previous">&#x2039;</button>
     <img id="lbImg" src="" alt="">
-    <button class="lb-nav lb-next" onclick="navLightbox(1)" aria-label="Next">›</button>
+    <button class="lb-nav lb-next" onclick="navLightbox(1)" aria-label="Next">&#x203a;</button>
     <div class="lb-counter" id="lbCounter"></div>
+    <button class="lb-download" onclick="downloadCurrent()">Download photo</button>
   </div>
 
   <script>
@@ -242,6 +273,22 @@
         `${gallery.image_count} photo${gallery.image_count !== 1 ? 's' : ''}`;
       document.getElementById('loadingMsg').style.display = 'none';
       document.getElementById('contentArea').style.display = 'block';
+    }
+
+    function downloadAll() {
+      if (!gallery) return;
+      const a = document.createElement('a');
+      a.href = `/api/client/download-all/${shareToken}`;
+      a.download = gallery.title + '.zip';
+      a.click();
+    }
+
+    function downloadCurrent() {
+      const img = gallery.images[currentIndex];
+      const a = document.createElement('a');
+      a.href = `/api/client/download/${img.id}/${shareToken}`;
+      a.download = img.filename;
+      a.click();
     }
 
     function escHtml(str) {

@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { initSchema } = require('./src/config/db');
+const { ensureBucket } = require('./src/services/storage');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +35,8 @@ async function start() {
   try {
     await initSchema();
     console.log('Database schema initialized');
+    await ensureBucket();
+    console.log('Storage bucket ready');
     app.listen(PORT, () => {
       console.log(`Photo Transfer App running on port ${PORT}`);
     });

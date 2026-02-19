@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Images — PhotoTransfer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+    }
+    header {
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-size: 1.2rem; font-weight: 700; }
+    .back-btn {
+      background: none;
+      border: 1px solid #333;
+      color: #aaa;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+    .back-btn:hover { border-color: #555; color: #fff; }
+    main { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { font-size: 1.5rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .gallery-name { color: #888; margin-bottom: 2rem; font-size: 0.95rem; }
+    .drop-zone {
+      border: 2px dashed #333;
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+      margin-bottom: 2rem;
+    }
+    .drop-zone.drag-over { border-color: #888; background: #1a1a1a; }
+    .drop-zone p { color: #666; margin-bottom: 1rem; }
+    .drop-zone .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .btn-select {
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-select:hover { background: #ddd; }
+    #fileInput { display: none; }
+    .upload-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .upload-item {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .thumb-preview {
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #111;
+      flex-shrink: 0;
+    }
+    .upload-info { flex: 1; min-width: 0; }
+    .upload-filename { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.3rem; }
+    .upload-size { font-size: 0.78rem; color: #666; margin-bottom: 0.5rem; }
+    .progress-bar { height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #4ade80; border-radius: 2px; transition: width 0.3s; }
+    .upload-status { font-size: 0.82rem; margin-top: 0.3rem; }
+    .status-pending { color: #888; }
+    .status-uploading { color: #60a5fa; }
+    .status-done { color: #4ade80; }
+    .status-error { color: #f87171; }
+    .summary { color: #888; font-size: 0.9rem; margin-bottom: 1rem; }
+    .btn-upload-all {
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 2rem;
+    }
+    .btn-upload-all:hover { background: #ddd; }
+    .btn-upload-all:disabled { background: #444; color: #888; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">📷 PhotoTransfer</div>
+    <a class="back-btn" href="/dashboard">← Dashboard</a>
+  </header>
+
+  <main>
+    <h2>Upload Images</h2>
+    <div class="gallery-name" id="galleryName">Loading gallery…</div>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">📁</div>
+      <p>Drag &amp; drop images here</p>
+      <button class="btn-select" onclick="document.getElementById('fileInput').click()">Choose Files</button>
+      <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/tiff">
+    </div>
+
+    <div id="queueSection" style="display:none">
+      <div class="summary" id="queueSummary"></div>
+      <button class="btn-upload-all" id="uploadAllBtn" onclick="uploadAll()">Upload All</button>
+      <div class="upload-list" id="uploadList"></div>
+    </div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('pt_token');
+    if (!token) window.location.href = '/login';
+
+    const galleryId = window.location.pathname.split('/').pop();
+    let uploadQueue = [];
+    let uploading = false;
+
+    async function loadGallery() {
+      try {
+        const res = await fetch('/api/galleries/' + galleryId, {
+          headers: { 'Authorization': 'Bearer ' + token },
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        if (!res.ok) { document.getElementById('galleryName').textContent = 'Gallery not found'; return; }
+        const g = await res.json();
+        document.getElementById('galleryName').textContent = `Gallery: ${g.title}`;
+        document.title = `Upload — ${g.title}`;
+      } catch {}
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function addFiles(files) {
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        const id = Date.now() + Math.random();
+        uploadQueue.push({ id, file, status: 'pending' });
+        renderItem(id, file);
+      }
+      updateSummary();
+      document.getElementById('queueSection').style.display = 'block';
+    }
+
+    function renderItem(id, file) {
+      const list = document.getElementById('uploadList');
+      const item = document.createElement('div');
+      item.className = 'upload-item';
+      item.id = 'item-' + id;
+
+      const img = document.createElement('img');
+      img.className = 'thumb-preview';
+      img.src = URL.createObjectURL(file);
+
+      item.innerHTML = `
+        <img class="thumb-preview" src="${URL.createObjectURL(file)}" alt="">
+        <div class="upload-info">
+          <div class="upload-filename">${file.name}</div>
+          <div class="upload-size">${formatBytes(file.size)}</div>
+          <div class="progress-bar"><div class="progress-fill" id="prog-${id}" style="width:0%"></div></div>
+          <div class="upload-status status-pending" id="status-${id}">Pending</div>
+        </div>
+      `;
+      list.appendChild(item);
+    }
+
+    function updateSummary() {
+      const total = uploadQueue.length;
+      const done = uploadQueue.filter(i => i.status === 'done').length;
+      const errors = uploadQueue.filter(i => i.status === 'error').length;
+      document.getElementById('queueSummary').textContent =
+        `${total} file${total !== 1 ? 's' : ''} queued${done ? ` • ${done} uploaded` : ''}${errors ? ` • ${errors} failed` : ''}`;
+    }
+
+    async function uploadAll() {
+      if (uploading) return;
+      uploading = true;
+      const btn = document.getElementById('uploadAllBtn');
+      btn.disabled = true;
+      btn.textContent = 'Uploading…';
+
+      for (const item of uploadQueue) {
+        if (item.status === 'done') continue;
+        item.status = 'uploading';
+        setStatus(item.id, 'uploading', 'Uploading…');
+        setProgress(item.id, 10);
+
+        const form = new FormData();
+        form.append('image', item.file);
+
+        try {
+          // Simulate progress
+          let prog = 10;
+          const interval = setInterval(() => {
+            prog = Math.min(prog + 15, 85);
+            setProgress(item.id, prog);
+          }, 300);
+
+          const res = await fetch('/api/images/upload/' + galleryId, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: form,
+          });
+          clearInterval(interval);
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Upload failed');
+          }
+
+          item.status = 'done';
+          setProgress(item.id, 100);
+          setStatus(item.id, 'done', '✓ Uploaded');
+        } catch (err) {
+          item.status = 'error';
+          setProgress(item.id, 0);
+          setStatus(item.id, 'error', '✕ ' + err.message);
+        }
+        updateSummary();
+      }
+
+      uploading = false;
+      const allDone = uploadQueue.every(i => i.status === 'done');
+      btn.disabled = false;
+      btn.textContent = allDone ? 'All Uploaded ✓' : 'Retry Failed';
+      if (allDone) btn.style.background = '#4ade80';
+    }
+
+    function setStatus(id, cls, text) {
+      const el = document.getElementById('status-' + id);
+      if (el) { el.className = 'upload-status status-' + cls; el.textContent = text; }
+    }
+    function setProgress(id, pct) {
+      const el = document.getElementById('prog-' + id);
+      if (el) el.style.width = pct + '%';
+    }
+
+    // Drag and drop
+    const dz = document.getElementById('dropZone');
+    dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dz.classList.remove('drag-over');
+      addFiles(e.dataTransfer.files);
+    });
+
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      addFiles(e.target.files);
+      e.target.value = '';
+    });
+
+    loadGallery();
+  </script>
+</body>
+</html>

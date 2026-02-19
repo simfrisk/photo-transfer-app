@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Gallery — PhotoTransfer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+    }
+    header {
+      background: #0f0f0f;
+      border-bottom: 1px solid #1a1a1a;
+      padding: 1.5rem 2rem;
+      text-align: center;
+    }
+    .gallery-title { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.25rem; }
+    .gallery-meta { color: #666; font-size: 0.9rem; }
+    .gallery-meta span { margin: 0 0.5rem; }
+    .gallery-desc { color: #888; margin-top: 0.5rem; font-size: 0.95rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+    main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .count { color: #666; font-size: 0.9rem; }
+    .btn-download-all {
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-download-all:hover { background: #ddd; }
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.5rem;
+    }
+    .photo-item {
+      position: relative;
+      aspect-ratio: 3/2;
+      overflow: hidden;
+      border-radius: 6px;
+      background: #1a1a1a;
+      cursor: pointer;
+    }
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+      display: block;
+    }
+    .photo-item:hover img { transform: scale(1.03); }
+    .photo-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      gap: 0.5rem;
+    }
+    .photo-item:hover .photo-overlay { opacity: 1; }
+    .btn-dl {
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-view {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .photo-name {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      padding: 1.5rem 0.75rem 0.6rem;
+      font-size: 0.75rem;
+      color: #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .photo-item:hover .photo-name { opacity: 1; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      flex-direction: column;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    .lb-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lb-close:hover { background: rgba(255,255,255,0.2); }
+    .lb-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lb-nav:hover { background: rgba(255,255,255,0.2); }
+    .lb-prev { left: 1.5rem; }
+    .lb-next { right: 1.5rem; }
+    .lb-info {
+      margin-top: 1rem;
+      color: #888;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .lb-dl {
+      margin-top: 0.75rem;
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .loading { text-align: center; color: #555; padding: 5rem; font-size: 1.1rem; }
+    .error-msg { text-align: center; color: #f87171; padding: 5rem; }
+    .branding {
+      text-align: center;
+      padding: 2rem;
+      color: #444;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="gallery-title" id="galleryTitle">Loading…</div>
+    <div class="gallery-meta" id="galleryMeta"></div>
+    <div class="gallery-desc" id="galleryDesc"></div>
+  </header>
+
+  <main>
+    <div id="loadingMsg" class="loading">Loading gallery…</div>
+    <div id="errorMsg" class="error-msg" style="display:none"></div>
+    <div id="contentArea" style="display:none">
+      <div class="toolbar">
+        <div class="count" id="photoCount"></div>
+        <button class="btn-download-all" onclick="downloadAll()">⬇ Download All</button>
+      </div>
+      <div class="photo-grid" id="photoGrid"></div>
+    </div>
+  </main>
+
+  <div class="branding">Delivered with PhotoTransfer</div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <button class="lb-close" onclick="closeLightbox()">×</button>
+    <button class="lb-nav lb-prev" onclick="navLightbox(-1)">‹</button>
+    <img id="lbImg" src="" alt="">
+    <button class="lb-nav lb-next" onclick="navLightbox(1)">›</button>
+    <div class="lb-info" id="lbInfo"></div>
+    <button class="lb-dl" id="lbDl" onclick="downloadCurrent()">⬇ Download Full Resolution</button>
+  </div>
+
+  <script>
+    const shareToken = window.location.pathname.split('/').pop();
+    let gallery = null;
+    let currentIndex = 0;
+
+    async function loadGallery() {
+      try {
+        const res = await fetch('/api/client/gallery/' + shareToken);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gallery not found');
+        gallery = data;
+        renderGallery();
+      } catch (err) {
+        document.getElementById('loadingMsg').style.display = 'none';
+        const errEl = document.getElementById('errorMsg');
+        errEl.style.display = 'block';
+        errEl.textContent = err.message;
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function renderGallery() {
+      document.getElementById('galleryTitle').textContent = gallery.title;
+      document.getElementById('galleryMeta').innerHTML =
+        `<span>By ${gallery.photographer_name}</span><span>·</span><span>${gallery.image_count} photo${gallery.image_count !== 1 ? 's' : ''}</span>`;
+      if (gallery.description) {
+        document.getElementById('galleryDesc').textContent = gallery.description;
+      }
+      document.title = gallery.title + ' — PhotoTransfer';
+
+      const grid = document.getElementById('photoGrid');
+      grid.innerHTML = '';
+
+      gallery.images.forEach((img, idx) => {
+        const item = document.createElement('div');
+        item.className = 'photo-item';
+        item.innerHTML = `
+          <img src="${img.thumbUrl}" alt="${escHtml(img.filename)}" loading="lazy">
+          <div class="photo-overlay">
+            <button class="btn-dl" onclick="downloadImage(${idx}, event)">⬇ Download</button>
+            <button class="btn-view" onclick="openLightbox(${idx}, event)">View Full Size</button>
+          </div>
+          <div class="photo-name">${escHtml(img.filename)}</div>
+        `;
+        grid.appendChild(item);
+      });
+
+      document.getElementById('photoCount').textContent =
+        `${gallery.image_count} photo${gallery.image_count !== 1 ? 's' : ''}`;
+      document.getElementById('loadingMsg').style.display = 'none';
+      document.getElementById('contentArea').style.display = 'block';
+    }
+
+    function escHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function downloadImage(idx, event) {
+      if (event) event.stopPropagation();
+      const img = gallery.images[idx];
+      const a = document.createElement('a');
+      a.href = `/api/client/download/${img.id}/${shareToken}`;
+      a.download = img.filename;
+      a.click();
+    }
+
+    async function downloadAll() {
+      if (!gallery) return;
+      for (let i = 0; i < gallery.images.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        downloadImage(i);
+      }
+    }
+
+    function openLightbox(idx, event) {
+      if (event) event.stopPropagation();
+      currentIndex = idx;
+      showLightboxImage();
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function showLightboxImage() {
+      const img = gallery.images[currentIndex];
+      document.getElementById('lbImg').src = img.thumbUrl;
+      document.getElementById('lbInfo').textContent =
+        `${currentIndex + 1} / ${gallery.images.length} — ${img.filename} — ${img.width}×${img.height}`;
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function navLightbox(dir) {
+      currentIndex = (currentIndex + dir + gallery.images.length) % gallery.images.length;
+      showLightboxImage();
+    }
+
+    function downloadCurrent() {
+      downloadImage(currentIndex);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('lightbox').classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') navLightbox(-1);
+      if (e.key === 'ArrowRight') navLightbox(1);
+    });
+
+    loadGallery();
+  </script>
+</body>
+</html>

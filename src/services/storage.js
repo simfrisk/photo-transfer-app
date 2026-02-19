@@ -50,8 +50,13 @@ async function getSignedDownloadUrl(key, expiresIn = 3600) {
   return getSignedUrl(s3, command, { expiresIn });
 }
 
+async function downloadFileStream(key) {
+  const response = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+  return response.Body;
+}
+
 async function deleteFile(key) {
   await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
 
-module.exports = { ensureBucket, uploadFile, getSignedUploadUrl, getSignedDownloadUrl, deleteFile };
+module.exports = { ensureBucket, uploadFile, getSignedUploadUrl, getSignedDownloadUrl, downloadFileStream, deleteFile };

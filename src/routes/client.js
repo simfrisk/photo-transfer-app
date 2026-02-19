@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../config/db');
-const { getSignedDownloadUrl } = require('../services/storage');
+const { getSignedDownloadUrl, downloadFileStream } = require('../services/storage');
 
 const router = express.Router();
 
@@ -64,7 +64,7 @@ router.get('/gallery/:shareToken', async (req, res) => {
   }
 });
 
-// GET /api/client/download/:imageId/:shareToken - get signed download URL
+// GET /api/client/download/:imageId/:shareToken - download image as attachment
 router.get('/download/:imageId/:shareToken', async (req, res) => {
   try {
     const result = await query(
@@ -86,8 +86,17 @@ router.get('/download/:imageId/:shareToken', async (req, res) => {
       return res.status(410).json({ error: 'This gallery link has expired' });
     }
 
-    const signedUrl = await getSignedDownloadUrl(image.original_key, 3600);
-    res.redirect(signedUrl);
+    // Stream the file from storage and set Content-Disposition to force download
+    const stream = await downloadFileStream(image.original_key);
+    const safeFilename = encodeURIComponent(image.filename).replace(/%20/g, '+');
+    res.set({
+      'Content-Type': image.mime_type || 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="${safeFilename}"`,
+    });
+    if (image.size_bytes) {
+      res.set('Content-Length', String(image.size_bytes));
+    }
+    stream.pipe(res);
   } catch (err) {
     console.error('Download error:', err);
     res.status(500).json({ error: 'Server error' });

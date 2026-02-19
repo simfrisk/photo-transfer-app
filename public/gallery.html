@@ -81,17 +81,16 @@
       background: #e2e0db;
       cursor: pointer;
     }
-    /* Wide feature items span 2 columns + 2 rows */
-    .photo-item.wide {
-      grid-column: span 2;
-      grid-row: span 2;
-    }
     /* Portrait/tall images span 2 rows */
     .photo-item.tall {
       grid-row: span 2;
     }
+    /* Wide landscape items span 2 columns */
+    .photo-item.wide {
+      grid-column: span 2;
+    }
     @media (max-width: 900px) {
-      .photo-item.wide { grid-column: span 1; grid-row: span 1; }
+      .photo-item.wide { grid-column: span 1; }
       .photo-item.tall { grid-row: span 2; }
     }
 
@@ -281,7 +280,7 @@
       }
     }
 
-    function renderGallery() {
+    async function renderGallery() {
       document.getElementById('galleryEyebrow').textContent = gallery.photographer_name;
       document.getElementById('galleryTitle').textContent = gallery.title;
       if (gallery.description) {
@@ -296,26 +295,52 @@
       const grid = document.getElementById('photoGrid');
       grid.innerHTML = '';
 
+      // Preload all thumbnails to get natural dimensions before placing in grid
+      const orientations = await Promise.all(gallery.images.map(img => new Promise(resolve => {
+        const probe = new Image();
+        probe.onload = () => resolve(probe.naturalHeight > probe.naturalWidth ? 'portrait' : 'landscape');
+        probe.onerror = () => resolve('landscape');
+        probe.src = img.thumbUrl;
+      })));
+
+      // Assign grid classes: portrait → tall (2 rows), landscape pairs next to a tall → wide (2 cols)
+      // With 3 columns and dense flow: tall takes col×1 row×2, so the cell beside it in the same
+      // two rows needs filling. If the neighbour is landscape, make it wide (col×2) to fill both rows.
+      const cols = 3;
+      const spans = orientations.map(o => ({ col: o === 'portrait' ? 1 : 1, row: o === 'portrait' ? 2 : 1, portrait: o === 'portrait' }));
+
+      // Simple pass: wherever a tall (row=2) item sits next to a single landscape, promote that
+      // landscape to wide so the two items together fill a 3-col stripe cleanly.
+      // We simulate the grid placement to find lonely landscape cells beside tall items.
+      // grid-auto-flow:dense handles most cases — just ensure every portrait is paired with a wide neighbour.
+      for (let i = 0; i < spans.length; i++) {
+        if (spans[i].portrait) {
+          // Find the nearest following landscape that hasn't been widened yet
+          for (let j = i + 1; j < spans.length; j++) {
+            if (!spans[j].portrait && spans[j].col === 1 && spans[j].row === 1) {
+              spans[j].wide = true;
+              spans[j].col = 2;
+              break;
+            }
+          }
+        }
+      }
+
       gallery.images.forEach((img, idx) => {
         const item = document.createElement('div');
-        item.className = 'photo-item';
+        const s = spans[idx];
+        const classes = ['photo-item'];
+        if (s.portrait) classes.push('tall');
+        if (s.wide) classes.push('wide');
+        item.className = classes.join(' ');
         item.setAttribute('role', 'button');
         item.setAttribute('tabindex', '0');
         item.setAttribute('aria-label', 'View ' + img.filename);
-        // Strip extension for cleaner label
         const label = img.filename.replace(/\.[^.]+$/, '');
         const imgEl = document.createElement('img');
         imgEl.alt = img.filename;
         imgEl.loading = 'lazy';
         imgEl.src = img.thumbUrl;
-        // Detect orientation once loaded and assign grid span class
-        imgEl.addEventListener('load', () => {
-          if (imgEl.naturalHeight > imgEl.naturalWidth) {
-            item.classList.add('tall');
-          } else if (idx % 7 === 0) {
-            item.classList.add('wide');
-          }
-        });
         const labelEl = document.createElement('div');
         labelEl.className = 'photo-label';
         labelEl.innerHTML = `<span>${escHtml(label)}</span>`;

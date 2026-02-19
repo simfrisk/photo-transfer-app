@@ -3,85 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Photographer Login — PhotoTransfer</title>
+  <title>Sign In — PhotoTransfer</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f0f0f;
-      color: #f0f0f0;
+      background: #fafaf9;
+      color: #1a1a1a;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 1rem;
     }
     .card {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
+      background: #fff;
+      border: 1px solid #e8e6e3;
       border-radius: 12px;
       padding: 2.5rem;
       width: 100%;
-      max-width: 400px;
+      max-width: 380px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     }
-    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
-    .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 2rem; }
-    label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 0.4rem; }
+    .logo-area { margin-bottom: 1.5rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: #111; }
+    .subtitle { color: #aaa; font-size: 0.85rem; margin-top: 0.2rem; }
+
+    .tabs { display: flex; gap: 0; margin-bottom: 1.75rem; border-bottom: 1px solid #e8e6e3; }
+    .tab {
+      flex: 1;
+      background: transparent;
+      color: #bbb;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0.6rem 0.5rem;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: -1px;
+    }
+    .tab.active { color: #111; border-bottom-color: #111; }
+    .tab:hover:not(.active) { color: #666; }
+
+    label { display: block; font-size: 0.8rem; color: #999; margin-bottom: 0.3rem; }
     input {
       width: 100%;
-      background: #111;
-      border: 1px solid #333;
-      border-radius: 8px;
-      color: #f0f0f0;
-      padding: 0.7rem 1rem;
-      font-size: 1rem;
-      margin-bottom: 1.2rem;
+      background: #fafaf9;
+      border: 1px solid #e0ddd9;
+      border-radius: 7px;
+      color: #1a1a1a;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
       transition: border-color 0.2s;
     }
-    input:focus { outline: none; border-color: #555; }
-    button {
+    input:focus { outline: none; border-color: #aaa; }
+    input::placeholder { color: #ccc; }
+
+    button[type="submit"] {
       width: 100%;
-      background: #fff;
-      color: #000;
+      background: #1a1a1a;
+      color: #fff;
       border: none;
-      border-radius: 8px;
-      padding: 0.75rem;
-      font-size: 1rem;
-      font-weight: 600;
+      border-radius: 7px;
+      padding: 0.7rem;
+      font-size: 0.92rem;
+      font-weight: 500;
       cursor: pointer;
       transition: background 0.2s;
+      margin-top: 0.25rem;
     }
-    button:hover { background: #ddd; }
-    button:disabled { background: #444; color: #888; cursor: not-allowed; }
+    button[type="submit"]:hover { background: #333; }
+    button[type="submit"]:disabled { background: #ccc; cursor: not-allowed; }
+
     .error {
-      background: #3b1a1a;
-      border: 1px solid #7b2a2a;
-      border-radius: 8px;
-      color: #f87171;
-      padding: 0.75rem 1rem;
-      font-size: 0.9rem;
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      border-radius: 7px;
+      color: #e57373;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.85rem;
       margin-bottom: 1rem;
       display: none;
     }
-    .logo { font-size: 2rem; margin-bottom: 1rem; }
-    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-    .tab {
-      flex: 1; background: transparent; color: #888;
-      border: 1px solid #333; border-radius: 8px;
-      padding: 0.5rem; font-size: 0.9rem; font-weight: 500;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .tab.active { background: #fff; color: #000; border-color: #fff; }
-    .tab:hover:not(.active) { border-color: #555; color: #ccc; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="logo">📷</div>
-    <h1>PhotoTransfer</h1>
-    <div class="tabs">
-      <button class="tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
-      <button class="tab" id="tabRegister" onclick="switchTab('register')">Create Account</button>
+    <div class="logo-area">
+      <h1>PhotoTransfer</h1>
+      <div class="subtitle">Photographer portal</div>
     </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabLogin" onclick="switchTab('login')">Sign in</button>
+      <button class="tab" id="tabRegister" onclick="switchTab('register')">Create account</button>
+    </div>
+
     <div class="error" id="error"></div>
 
     <form id="loginForm">
@@ -89,7 +108,7 @@
       <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
       <label for="password">Password</label>
       <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
-      <button type="submit" id="loginBtn">Sign In</button>
+      <button type="submit" id="loginBtn">Sign in</button>
     </form>
 
     <form id="registerForm" style="display:none">
@@ -99,9 +118,9 @@
       <input type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email">
       <label for="regPassword">Password</label>
       <input type="password" id="regPassword" placeholder="Min. 8 characters" required autocomplete="new-password">
-      <label for="regSecret">Registration Code</label>
-      <input type="password" id="regSecret" placeholder="Enter your registration code" required>
-      <button type="submit" id="registerBtn">Create Account</button>
+      <label for="regSecret">Registration code</label>
+      <input type="password" id="regSecret" placeholder="Enter your code" required>
+      <button type="submit" id="registerBtn">Create account</button>
     </form>
   </div>
 
@@ -132,7 +151,6 @@
       errorEl.style.display = 'none';
       btn.disabled = true;
       btn.textContent = 'Signing in…';
-
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
@@ -151,7 +169,7 @@
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Sign In';
+        btn.textContent = 'Sign in';
       }
     });
 
@@ -162,7 +180,6 @@
       errorEl.style.display = 'none';
       btn.disabled = true;
       btn.textContent = 'Creating account…';
-
       try {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
@@ -183,7 +200,7 @@
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Create Account';
+        btn.textContent = 'Create account';
       }
     });
   </script>

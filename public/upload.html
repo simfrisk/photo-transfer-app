@@ -8,78 +8,149 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f0f0f; color: #f0f0f0; min-height: 100vh;
+      background: #fafaf9;
+      color: #1a1a1a;
+      min-height: 100vh;
     }
     header {
-      background: #1a1a1a; border-bottom: 1px solid #2a2a2a;
-      padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+      background: #fff;
+      border-bottom: 1px solid #e8e6e3;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .logo { font-size: 1.2rem; font-weight: 700; }
+    .logo { font-size: 1.1rem; font-weight: 700; color: #111; letter-spacing: -0.01em; }
     .back-btn {
-      background: none; border: 1px solid #333; color: #aaa;
-      padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer;
-      font-size: 0.85rem; text-decoration: none;
+      background: none;
+      border: 1px solid #ddd;
+      color: #999;
+      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      text-decoration: none;
+      transition: all 0.2s;
     }
-    .back-btn:hover { border-color: #555; color: #fff; }
-    main { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { font-size: 1.5rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
-    .gallery-name { color: #888; margin-bottom: 2rem; font-size: 0.95rem; }
+    .back-btn:hover { border-color: #bbb; color: #444; }
+
+    main { max-width: 860px; margin: 0 auto; padding: 2rem; }
+    h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.3rem; letter-spacing: -0.02em; color: #111; }
+    .gallery-name { color: #aaa; margin-bottom: 1.75rem; font-size: 0.88rem; }
+
     .drop-zone {
-      border: 2px dashed #333; border-radius: 12px; padding: 3rem;
-      text-align: center; transition: border-color 0.2s, background 0.2s;
-      cursor: pointer; margin-bottom: 2rem;
+      border: 2px dashed #ddd;
+      border-radius: 10px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      background: #fff;
     }
-    .drop-zone.drag-over { border-color: #888; background: #1a1a1a; }
-    .drop-zone p { color: #666; margin-bottom: 1rem; }
-    .drop-zone .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .drop-zone.drag-over { border-color: #aaa; background: #f4f3f1; }
+    .drop-zone p { color: #bbb; margin-bottom: 1.25rem; font-size: 0.9rem; }
+    .drop-zone .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+
+    .drop-btns { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
     .btn-select {
-      background: #fff; color: #000; border: none; border-radius: 8px;
-      padding: 0.65rem 1.5rem; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    .btn-select:hover { background: #ddd; }
+    .btn-select:hover { background: #333; }
+    .btn-select-folder {
+      background: none;
+      border: 1px solid #ddd;
+      color: #777;
+      border-radius: 7px;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-select-folder:hover { border-color: #bbb; color: #333; }
+
     #fileInput { display: none; }
-    .upload-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    #folderInput { display: none; }
+
+    .upload-list { display: flex; flex-direction: column; gap: 0.6rem; }
     .upload-item {
-      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px;
-      padding: 1rem; display: flex; align-items: center; gap: 1rem;
+      background: #fff;
+      border: 1px solid #e8e6e3;
+      border-radius: 8px;
+      padding: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
     }
-    .thumb-preview { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; background: #111; flex-shrink: 0; }
+    .thumb-preview {
+      width: 52px;
+      height: 52px;
+      border-radius: 5px;
+      object-fit: cover;
+      background: #f0eeeb;
+      flex-shrink: 0;
+    }
     .upload-info { flex: 1; min-width: 0; }
-    .upload-filename { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.3rem; }
-    .upload-size { font-size: 0.78rem; color: #666; margin-bottom: 0.5rem; }
-    .progress-bar { height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #4ade80; border-radius: 2px; transition: width 0.2s; }
-    .upload-status { font-size: 0.82rem; margin-top: 0.3rem; }
-    .status-pending { color: #888; }
-    .status-uploading { color: #60a5fa; }
-    .status-done { color: #4ade80; }
-    .status-error { color: #f87171; }
-    .summary { color: #888; font-size: 0.9rem; margin-bottom: 1rem; }
+    .upload-filename { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.2rem; color: #333; }
+    .upload-size { font-size: 0.75rem; color: #bbb; margin-bottom: 0.4rem; }
+    .progress-bar { height: 3px; background: #f0eeeb; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #4caf50; border-radius: 2px; transition: width 0.2s; }
+    .upload-status { font-size: 0.78rem; margin-top: 0.25rem; color: #bbb; }
+    .status-uploading { color: #64b5f6; }
+    .status-done { color: #4caf50; }
+    .status-error { color: #e57373; }
+
+    .summary { color: #aaa; font-size: 0.85rem; margin-bottom: 0.75rem; }
     .btn-upload-all {
-      background: #fff; color: #000; border: none; border-radius: 8px;
-      padding: 0.75rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 2rem;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 0.7rem 1.75rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      transition: background 0.2s;
     }
-    .btn-upload-all:hover { background: #ddd; }
-    .btn-upload-all:disabled { background: #444; color: #888; cursor: not-allowed; }
+    .btn-upload-all:hover { background: #333; }
+    .btn-upload-all:disabled { background: #ccc; cursor: not-allowed; }
+
+    @media (max-width: 600px) {
+      main { padding: 1rem; }
+      .drop-zone { padding: 2rem 1rem; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <div class="logo">📷 PhotoTransfer</div>
+    <div class="logo">PhotoTransfer</div>
     <a class="back-btn" href="/dashboard">← Dashboard</a>
   </header>
   <main>
     <h2>Upload Images</h2>
-    <div class="gallery-name" id="galleryName">Loading gallery…</div>
+    <div class="gallery-name" id="galleryName">Loading…</div>
     <div class="drop-zone" id="dropZone">
-      <div class="icon">📁</div>
-      <p>Drag &amp; drop images here</p>
-      <button class="btn-select" onclick="document.getElementById('fileInput').click()">Choose Files</button>
+      <div class="icon">🖼</div>
+      <p>Drag &amp; drop images or a folder here</p>
+      <div class="drop-btns">
+        <button class="btn-select" onclick="document.getElementById('fileInput').click()">Choose files</button>
+        <button class="btn-select-folder" onclick="document.getElementById('folderInput').click()">Upload folder</button>
+      </div>
       <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/tiff">
+      <input type="file" id="folderInput" multiple accept="image/jpeg,image/png,image/webp,image/tiff" webkitdirectory>
     </div>
     <div id="queueSection" style="display:none">
       <div class="summary" id="queueSummary"></div>
-      <button class="btn-upload-all" id="uploadAllBtn" onclick="uploadAll()">Upload All</button>
+      <button class="btn-upload-all" id="uploadAllBtn" onclick="uploadAll()">Upload all</button>
       <div class="upload-list" id="uploadList"></div>
     </div>
   </main>
@@ -100,7 +171,7 @@
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) { document.getElementById('galleryName').textContent = 'Gallery not found'; return; }
         const g = await res.json();
-        document.getElementById('galleryName').textContent = `Gallery: ${g.title}`;
+        document.getElementById('galleryName').textContent = g.title;
         document.title = `Upload — ${g.title}`;
       } catch {}
     }
@@ -127,13 +198,15 @@
       const item = document.createElement('div');
       item.className = 'upload-item';
       item.id = 'item-' + id;
+      // Show relative path if uploaded from folder
+      const displayName = file.webkitRelativePath || file.name;
       item.innerHTML = `
         <img class="thumb-preview" src="${URL.createObjectURL(file)}" alt="">
         <div class="upload-info">
-          <div class="upload-filename">${file.name}</div>
+          <div class="upload-filename" title="${displayName}">${displayName}</div>
           <div class="upload-size">${formatBytes(file.size)}</div>
           <div class="progress-bar"><div class="progress-fill" id="prog-${id}" style="width:0%"></div></div>
-          <div class="upload-status status-pending" id="status-${id}">Pending</div>
+          <div class="upload-status" id="status-${id}">Pending</div>
         </div>
       `;
       list.appendChild(item);
@@ -144,11 +217,10 @@
       const done = uploadQueue.filter(i => i.status === 'done').length;
       const errors = uploadQueue.filter(i => i.status === 'error').length;
       document.getElementById('queueSummary').textContent =
-        `${total} file${total !== 1 ? 's' : ''} queued${done ? ` • ${done} uploaded` : ''}${errors ? ` • ${errors} failed` : ''}`;
+        `${total} file${total !== 1 ? 's' : ''}${done ? ` · ${done} uploaded` : ''}${errors ? ` · ${errors} failed` : ''}`;
     }
 
     async function uploadAll() {
-      console.log('[Upload] uploadAll called, queue length:', uploadQueue.length, 'uploading:', uploading);
       if (uploading) return;
       uploading = true;
       const btn = document.getElementById('uploadAllBtn');
@@ -161,13 +233,8 @@
         setStatus(item.id, 'uploading', 'Uploading…');
         setProgress(item.id, 10);
 
-        console.log('[Upload] Starting upload for:', item.file.name, 'size:', item.file.size, 'type:', item.file.type);
-
         try {
-          // Simulate progress while uploading (fetch doesn't expose upload progress)
           let progInterval = setInterval(() => setProgress(item.id, Math.min(90, (parseInt(document.getElementById('prog-' + item.id).style.width) || 10) + 5)), 400);
-
-          console.log('[Upload] Sending fetch to /api/images/upload/' + galleryId);
           const res = await fetch('/api/images/upload/' + galleryId, {
             method: 'POST',
             headers: {
@@ -177,23 +244,15 @@
             },
             body: item.file,
           });
-
           clearInterval(progInterval);
-          console.log('[Upload] Response status:', res.status, res.statusText);
-
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            console.error('[Upload] Server error response:', err);
             throw new Error(err.error || `Upload failed (${res.status})`);
           }
-
-          const result = await res.json();
-          console.log('[Upload] Success:', result);
           item.status = 'done';
           setProgress(item.id, 100);
           setStatus(item.id, 'done', '✓ Uploaded');
         } catch (err) {
-          console.error('[Upload] Upload failed for', item.file.name, ':', err);
           item.status = 'error';
           setProgress(item.id, 0);
           setStatus(item.id, 'error', '✕ ' + err.message);
@@ -204,8 +263,8 @@
       uploading = false;
       const allDone = uploadQueue.every(i => i.status === 'done');
       btn.disabled = false;
-      btn.textContent = allDone ? 'All Uploaded ✓' : 'Retry Failed';
-      if (allDone) btn.style.background = '#4ade80';
+      btn.textContent = allDone ? 'All uploaded ✓' : 'Retry failed';
+      if (allDone) { btn.style.background = '#4caf50'; }
     }
 
     function setStatus(id, cls, text) {
@@ -223,9 +282,51 @@
     dz.addEventListener('drop', (e) => {
       e.preventDefault();
       dz.classList.remove('drag-over');
-      addFiles(e.dataTransfer.files);
+      // Support dropped folders via DataTransferItemList
+      const items = e.dataTransfer.items;
+      if (items) {
+        const files = [];
+        let pending = 0;
+        function traverseEntry(entry) {
+          if (entry.isFile) {
+            pending++;
+            entry.file(f => {
+              if (f.type.startsWith('image/')) files.push(f);
+              pending--;
+              if (pending === 0) addFiles(files);
+            });
+          } else if (entry.isDirectory) {
+            const reader = entry.createReader();
+            function readAll() {
+              pending++;
+              reader.readEntries(entries => {
+                pending--;
+                if (entries.length === 0) {
+                  if (pending === 0) addFiles(files);
+                  return;
+                }
+                entries.forEach(traverseEntry);
+                readAll();
+              });
+            }
+            readAll();
+          }
+        }
+        for (let i = 0; i < items.length; i++) {
+          const entry = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
+          if (entry) traverseEntry(entry);
+        }
+        if (!items.length) addFiles(e.dataTransfer.files);
+      } else {
+        addFiles(e.dataTransfer.files);
+      }
     });
+
     document.getElementById('fileInput').addEventListener('change', (e) => {
+      addFiles(e.target.files);
+      e.target.value = '';
+    });
+    document.getElementById('folderInput').addEventListener('change', (e) => {
       addFiles(e.target.files);
       e.target.value = '';
     });

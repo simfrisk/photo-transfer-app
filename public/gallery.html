@@ -8,136 +8,102 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f0f0f;
-      color: #f0f0f0;
+      background: #fafaf9;
+      color: #1a1a1a;
       min-height: 100vh;
     }
     header {
-      background: #0f0f0f;
-      border-bottom: 1px solid #1a1a1a;
-      padding: 1.5rem 2rem;
+      background: #fff;
+      border-bottom: 1px solid #e8e6e3;
+      padding: 2rem 2rem 1.5rem;
       text-align: center;
     }
-    .gallery-title { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.25rem; }
-    .gallery-meta { color: #666; font-size: 0.9rem; }
-    .gallery-meta span { margin: 0 0.5rem; }
-    .gallery-desc { color: #888; margin-top: 0.5rem; font-size: 0.95rem; max-width: 600px; margin-left: auto; margin-right: auto; }
-    main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+    .gallery-title { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.25rem; color: #111; }
+    .gallery-meta { color: #999; font-size: 0.85rem; }
+    .gallery-meta span { margin: 0 0.4rem; }
+    .gallery-desc { color: #777; margin-top: 0.4rem; font-size: 0.9rem; max-width: 520px; margin-left: auto; margin-right: auto; }
+
+    main { max-width: 1440px; margin: 0 auto; padding: 1.5rem; }
+
     .toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
     }
-    .count { color: #666; font-size: 0.9rem; }
-    .btn-download-all {
-      background: #fff;
-      color: #000;
-      border: none;
-      border-radius: 8px;
-      padding: 0.6rem 1.25rem;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-download-all:hover { background: #ddd; }
+    .count { color: #aaa; font-size: 0.85rem; }
+
+    /* Masonry-style puzzle grid */
     .photo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 0.5rem;
+      columns: 4 240px;
+      column-gap: 0.5rem;
     }
+    @media (max-width: 900px) { .photo-grid { columns: 3 180px; } }
+    @media (max-width: 600px) { .photo-grid { columns: 2 140px; column-gap: 0.35rem; } }
+    @media (max-width: 380px) { .photo-grid { columns: 2 120px; } }
+
     .photo-item {
+      break-inside: avoid;
+      margin-bottom: 0.5rem;
       position: relative;
-      aspect-ratio: 3/2;
       overflow: hidden;
       border-radius: 6px;
-      background: #1a1a1a;
+      background: #e8e6e3;
       cursor: pointer;
-    }
-    .photo-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s;
       display: block;
     }
-    .photo-item:hover img { transform: scale(1.03); }
-    .photo-overlay {
+    @media (max-width: 600px) { .photo-item { margin-bottom: 0.35rem; } }
+
+    /* Varied heights for puzzle feel */
+    .photo-item:nth-child(3n+1) { }
+    .photo-item:nth-child(3n+2) { }
+    .photo-item:nth-child(3n+3) { }
+
+    .photo-item img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.35s ease;
+    }
+    .photo-item:hover img { transform: scale(1.04); }
+
+    /* No overlay buttons — just a subtle dim on hover */
+    .photo-item::after {
+      content: '';
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.2s;
-      gap: 0.5rem;
+      background: rgba(0,0,0,0);
+      transition: background 0.25s;
+      pointer-events: none;
     }
-    .photo-item:hover .photo-overlay { opacity: 1; }
-    .btn-dl {
-      background: white;
-      color: black;
-      border: none;
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-view {
-      background: rgba(255,255,255,0.15);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 6px;
-      padding: 0.4rem 0.9rem;
-      font-size: 0.82rem;
-      cursor: pointer;
-    }
-    .photo-name {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.8));
-      padding: 1.5rem 0.75rem 0.6rem;
-      font-size: 0.75rem;
-      color: #ccc;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .photo-item:hover .photo-name { opacity: 1; }
+    .photo-item:hover::after { background: rgba(0,0,0,0.08); }
 
-    /* Lightbox */
+    /* Lightbox — true fullscreen */
     .lightbox {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.95);
+      background: #000;
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      flex-direction: column;
     }
     .lightbox.open { display: flex; }
     .lightbox img {
-      max-width: 90vw;
-      max-height: 80vh;
+      max-width: 100vw;
+      max-height: 100vh;
       object-fit: contain;
-      border-radius: 4px;
+      display: block;
     }
     .lb-close {
-      position: absolute;
-      top: 1.5rem;
-      right: 1.5rem;
-      background: rgba(255,255,255,0.1);
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(4px);
       border: none;
-      color: white;
-      font-size: 1.5rem;
+      color: #fff;
+      font-size: 1.25rem;
       width: 2.5rem;
       height: 2.5rem;
       border-radius: 50%;
@@ -145,16 +111,19 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background 0.2s;
+      z-index: 1001;
     }
-    .lb-close:hover { background: rgba(255,255,255,0.2); }
+    .lb-close:hover { background: rgba(255,255,255,0.22); }
     .lb-nav {
-      position: absolute;
+      position: fixed;
       top: 50%;
       transform: translateY(-50%);
       background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(4px);
       border: none;
-      color: white;
-      font-size: 1.5rem;
+      color: #fff;
+      font-size: 1.4rem;
       width: 3rem;
       height: 3rem;
       border-radius: 50%;
@@ -162,35 +131,36 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background 0.2s;
+      z-index: 1001;
     }
     .lb-nav:hover { background: rgba(255,255,255,0.2); }
-    .lb-prev { left: 1.5rem; }
-    .lb-next { right: 1.5rem; }
-    .lb-info {
-      margin-top: 1rem;
-      color: #888;
-      font-size: 0.85rem;
-      text-align: center;
-    }
-    .lb-dl {
-      margin-top: 0.75rem;
-      background: white;
-      color: black;
-      border: none;
-      border-radius: 8px;
-      padding: 0.6rem 1.5rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.9rem;
+    .lb-prev { left: 1rem; }
+    .lb-next { right: 1rem; }
+    .lb-counter {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.5);
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      z-index: 1001;
+      pointer-events: none;
     }
 
-    .loading { text-align: center; color: #555; padding: 5rem; font-size: 1.1rem; }
-    .error-msg { text-align: center; color: #f87171; padding: 5rem; }
+    .loading { text-align: center; color: #bbb; padding: 5rem; font-size: 1rem; }
+    .error-msg { text-align: center; color: #e57373; padding: 5rem; }
     .branding {
       text-align: center;
       padding: 2rem;
-      color: #444;
-      font-size: 0.8rem;
+      color: #ccc;
+      font-size: 0.78rem;
+    }
+
+    /* Touch swipe hint on mobile */
+    @media (hover: none) {
+      .lb-nav { opacity: 0.6; }
     }
   </style>
 </head>
@@ -207,7 +177,6 @@
     <div id="contentArea" style="display:none">
       <div class="toolbar">
         <div class="count" id="photoCount"></div>
-        <button class="btn-download-all" onclick="downloadAll()">⬇ Download All</button>
       </div>
       <div class="photo-grid" id="photoGrid"></div>
     </div>
@@ -217,18 +186,18 @@
 
   <!-- Lightbox -->
   <div class="lightbox" id="lightbox">
-    <button class="lb-close" onclick="closeLightbox()">×</button>
-    <button class="lb-nav lb-prev" onclick="navLightbox(-1)">‹</button>
+    <button class="lb-close" onclick="closeLightbox()" aria-label="Close">✕</button>
+    <button class="lb-nav lb-prev" onclick="navLightbox(-1)" aria-label="Previous">‹</button>
     <img id="lbImg" src="" alt="">
-    <button class="lb-nav lb-next" onclick="navLightbox(1)">›</button>
-    <div class="lb-info" id="lbInfo"></div>
-    <button class="lb-dl" id="lbDl" onclick="downloadCurrent()">⬇ Download Full Resolution</button>
+    <button class="lb-nav lb-next" onclick="navLightbox(1)" aria-label="Next">›</button>
+    <div class="lb-counter" id="lbCounter"></div>
   </div>
 
   <script>
     const shareToken = window.location.pathname.split('/').pop();
     let gallery = null;
     let currentIndex = 0;
+    let touchStartX = 0;
 
     async function loadGallery() {
       try {
@@ -245,15 +214,10 @@
       }
     }
 
-    function formatBytes(bytes) {
-      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
-      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
     function renderGallery() {
       document.getElementById('galleryTitle').textContent = gallery.title;
       document.getElementById('galleryMeta').innerHTML =
-        `<span>By ${gallery.photographer_name}</span><span>·</span><span>${gallery.image_count} photo${gallery.image_count !== 1 ? 's' : ''}</span>`;
+        `<span>By ${escHtml(gallery.photographer_name)}</span><span>·</span><span>${gallery.image_count} photo${gallery.image_count !== 1 ? 's' : ''}</span>`;
       if (gallery.description) {
         document.getElementById('galleryDesc').textContent = gallery.description;
       }
@@ -265,14 +229,12 @@
       gallery.images.forEach((img, idx) => {
         const item = document.createElement('div');
         item.className = 'photo-item';
-        item.innerHTML = `
-          <img src="${img.thumbUrl}" alt="${escHtml(img.filename)}" loading="lazy">
-          <div class="photo-overlay">
-            <button class="btn-dl" onclick="downloadImage(${idx}, event)">⬇ Download</button>
-            <button class="btn-view" onclick="openLightbox(${idx}, event)">View Full Size</button>
-          </div>
-          <div class="photo-name">${escHtml(img.filename)}</div>
-        `;
+        item.setAttribute('role', 'button');
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('aria-label', 'View ' + img.filename);
+        item.innerHTML = `<img src="${escHtml(img.thumbUrl)}" alt="${escHtml(img.filename)}" loading="lazy">`;
+        item.addEventListener('click', () => openLightbox(idx));
+        item.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') openLightbox(idx); });
         grid.appendChild(item);
       });
 
@@ -288,25 +250,7 @@
       return d.innerHTML;
     }
 
-    function downloadImage(idx, event) {
-      if (event) event.stopPropagation();
-      const img = gallery.images[idx];
-      const a = document.createElement('a');
-      a.href = `/api/client/download/${img.id}/${shareToken}`;
-      a.download = img.filename;
-      a.click();
-    }
-
-    function downloadAll() {
-      if (!gallery) return;
-      const a = document.createElement('a');
-      a.href = `/api/client/download-all/${shareToken}`;
-      a.download = gallery.title + '.zip';
-      a.click();
-    }
-
-    function openLightbox(idx, event) {
-      if (event) event.stopPropagation();
+    function openLightbox(idx) {
       currentIndex = idx;
       showLightboxImage();
       document.getElementById('lightbox').classList.add('open');
@@ -316,8 +260,9 @@
     function showLightboxImage() {
       const img = gallery.images[currentIndex];
       document.getElementById('lbImg').src = img.thumbUrl;
-      document.getElementById('lbInfo').textContent =
-        `${currentIndex + 1} / ${gallery.images.length} — ${img.filename} — ${img.width}×${img.height}`;
+      document.getElementById('lbImg').alt = img.filename;
+      document.getElementById('lbCounter').textContent =
+        `${currentIndex + 1} / ${gallery.images.length}`;
     }
 
     function closeLightbox() {
@@ -330,10 +275,6 @@
       showLightboxImage();
     }
 
-    function downloadCurrent() {
-      downloadImage(currentIndex);
-    }
-
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
       if (!document.getElementById('lightbox').classList.contains('open')) return;
@@ -341,6 +282,15 @@
       if (e.key === 'ArrowLeft') navLightbox(-1);
       if (e.key === 'ArrowRight') navLightbox(1);
     });
+
+    // Touch swipe for mobile lightbox
+    document.getElementById('lightbox').addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    document.getElementById('lightbox').addEventListener('touchend', (e) => {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) navLightbox(diff > 0 ? 1 : -1);
+    }, { passive: true });
 
     loadGallery();
   </script>

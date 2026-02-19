@@ -95,6 +95,7 @@
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     .gallery-card:hover { border-color: #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
@@ -103,14 +104,15 @@
     .gallery-meta { color: #999; font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; }
     .gallery-actions {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 0.5rem;
       margin-top: auto;
       padding-top: 1rem;
       border-top: 1px solid #f0eeeb;
     }
-    .gallery-actions-left { display: flex; gap: 0.5rem; }
-    .gallery-actions-right { margin-left: auto; }
+    .gallery-actions-left { display: flex; gap: 0.5rem; flex: 1; min-width: 0; }
+    .gallery-actions-right { margin-left: auto; flex-shrink: 0; }
 
     .btn-action {
       background: none;

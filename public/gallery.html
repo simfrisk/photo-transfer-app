@@ -297,12 +297,12 @@
       a.click();
     }
 
-    async function downloadAll() {
+    function downloadAll() {
       if (!gallery) return;
-      for (let i = 0; i < gallery.images.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        downloadImage(i);
-      }
+      const a = document.createElement('a');
+      a.href = `/api/client/download-all/${shareToken}`;
+      a.download = gallery.title + '.zip';
+      a.click();
     }
 
     function openLightbox(idx, event) {
